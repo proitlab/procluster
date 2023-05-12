@@ -39,13 +39,8 @@ services:
       - target: 443
         published: 443
         mode: host
-#      - "80:80"
-#      - "8083:8083"
-#      - "443:443"
       - target: 8080
         published: 8080
-#        mode: host
-#      - "8080:8080"
     volumes:
       #- "/mnt/gfs-vol1/letsencrypt:/etc/traefik/acme"
       #- "/opt/docker/swarm/traefik/letsencrypt:/etc/traefik/acme"
