@@ -17,8 +17,6 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.watch=true"
       - "--providers.docker.swarmMode=true"
-        #- "--providers.docker.endpoint=unix:///var/run/docker.sock"
-        #- "--providers.file.filename=/traefik.yml"
       - "--providers.file.directory=/config"
       - "--providers.file.watch=true"
       - "--metrics.prometheus=true"
@@ -28,10 +26,8 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-        #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.letsencrypt.acme.email=dedy.sutanto@saltis.id"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      #- "--certificatesresolvers.letsencrypt.acme.storage=acme.json"
     ports:
       - target: 80
         published: 80
@@ -42,12 +38,13 @@ services:
       - target: 8080
         published: 8080
     volumes:
-      #- "/mnt/gfs-vol1/letsencrypt:/etc/traefik/acme"
-      #- "/opt/docker/swarm/traefik/letsencrypt:/etc/traefik/acme"
       - "/opt/docker/swarm/traefik/letsencrypt:/letsencrypt"
-        #- "/opt/docker/swarm/traefik/traefik.yml:/traefik.yml"
       - "/opt/docker/swarm/traefik/config:/config"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - traefik-net
 
