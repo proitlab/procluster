@@ -41,10 +41,6 @@ services:
       - "/opt/docker/swarm/traefik/letsencrypt:/letsencrypt"
       - "/opt/docker/swarm/traefik/config:/config"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
     networks:
       - traefik-net
 
