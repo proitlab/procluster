@@ -1,0 +1,26 @@
+#!/bin/bash
+TYPE=$1
+NAME=$2
+STATE=$3
+INTERFACE=ens1
+IPADDR=103.80.237.164/29
+GATEWAY=103.80.237.161
+LOGFILE=/etc/keepalived/ha-avail.log
+
+case ${STATE} in
+        "MASTER") ip link set dev ${INTERFACE} up
+		  ip addr add ${IPADDR} dev ${INTERFACE}
+		  route add default gw ${GATEWAY}
+		  echo "MASTER" >> ${LOGFILE}
+                  ;;
+        "BACKUP") ip link set dev ${INTERFACE} down
+                  ;;
+		  echo "BACKUP" >> ${LOGFILE}
+        "FAULT")  ip link set dev ${INTERFACE} down
+		  echo "FAULT" >> ${LOGFILE}
+                  exit 0
+                  ;;
+        *)        /usr/bin/logger "HA unknown state"
+                  exit 1
+                  ;;
+esac

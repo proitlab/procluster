@@ -1,0 +1,48 @@
+## DYNAMIC CONFIGURATION
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`server1.saltis.id`) && PathPrefix(`/`)"
+      service: dashboard@internal
+      middlewares:
+        - traefik-auth
+        - dashboard_redirect@internal
+        - dashboard_stripprefix@internal
+      entryPoints:
+        - websecure
+#      tls:
+#        certresolver: letsencrypt
+    traefik-api:
+      rule: "Host(`server1.saltis.id`) && PathPrefix(`/api`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+#      tls:
+#        certresolver: letsencrypt
+
+#    route-prometheus:
+#      rule: "PathPrefix(`/prometheus`) || PathPrefix(`/graph')"
+#      service: traefik-prometheus
+#      middlewares:
+#        - remove-prefix
+#      entryPoints:
+#        - web
+
+  middlewares:
+    traefik-auth:
+      basicAuth:
+        removeHeader: true
+        users:
+          - "admin:$apr1$upFrmajl$FUp/0pAtW7PkZr6wZsAX81"
+    remove-prefix:
+      stripPrefix:
+        prefixes:
+          - "/traefik"
+          - "/prometheus"
+          - "/grafana"
+        
+  services:
+    traefik-prometheus:
+      loadBalancer:
+        servers:
+            - url: "http://traefik-prometheus:9090"

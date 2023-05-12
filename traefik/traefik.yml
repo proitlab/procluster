@@ -1,0 +1,150 @@
+## STATIC CONFIGURATION
+log:
+  level: INFO
+
+api:
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+  web-8083:
+    address: ":8083"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    filename: "traefik.yml"
+
+# Configuring a buffer of 100 lines
+accessLog:
+  filePath: "/var/logs/access.log"
+
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+certificatesResolvers:
+    letsencrypt:
+     # Enable ACME (Let's Encrypt): automatic SSL.
+      acme:
+        httpchallenge:
+          entrypoint: web
+        email: "dedy.sutanto@saltis.id"
+        storage: "/letsencrypt/acme.json"
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13
+
+## DYNAMIC CONFIGURATION
+http:
+  routers:
+    route-to-nodeos:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/v1/chain`)"
+      #rule: "Host(`api.vex.proit.id`)"
+      service: route-to-nodeos-backend
+      priority: 1000
+      entryPoints:
+        - web
+        - web-8083
+    route-to-nodeos-https:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/v1/chain`)"
+      #rule: "Host(`api.vex.proit.id`)"
+      service: route-to-nodeos-backend
+      priority: 1000
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+    route-to-history:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/v1/history`)"
+      service: route-to-history-backend
+      entryPoints:
+        - web
+    route-to-api:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/api/v1`)"
+      service: route-to-api-backend
+      entryPoints:
+        - web
+#    traefik-dashboard:
+#      rule: "PathPrefix(`/`)"
+#      service: dashboard@internal
+#      middlewares:
+#        - traefik-auth
+#        - dashboard_redirect@internal
+#        - dashboard_stripprefix@internal
+#      entryPoints:
+#        - traefik
+#    traefik-api:
+#      rule: "PathPrefix(`/api`)"
+#      service: api@internal
+#      entryPoints:
+#        - web
+
+#    route-prometheus:
+#      rule: "PathPrefix(`/prometheus`) || PathPrefix(`/graph')"
+#      service: traefik-prometheus
+#      middlewares:
+#        - remove-prefix
+#      entryPoints:
+#        - web
+
+  middlewares:
+    traefik-auth:
+      basicAuth:
+        removeHeader: true
+        users:
+          - "admin:$apr1$upFrmajl$FUp/0pAtW7PkZr6wZsAX81"
+    remove-prefix:
+      stripPrefix:
+        prefixes:
+          - "/traefik"
+          - "/prometheus"
+          - "/grafana"
+        
+  services:
+    route-to-nodeos-backend:
+      loadBalancer:
+        healthCheck:
+            path: /v1/chain/get_info
+            interval: "30s"
+            timeout: "3s"
+        servers:
+            #- url: "http://isp.proit.id:8089"
+                  - url: "http://server1.saltis.id:8089"
+                  - url: "http://api.databisnis.id:8092"
+                  #- url: "http://api.databisnis.id:8092"
+                  #- url: "https://dejaveapi.com"
+                  #- url: "http://209.97.162.124:8080"
+    route-to-history-backend:
+      loadBalancer:
+        healthCheck:
+            path: /v1/history/get_accounts
+            interval: "30s"
+            timeout: "3s"
+        servers:
+            #    - url: "http://server2a.saltis.id:3333"
+            #    - url: "http://server1a.saltis.id:3333"
+            #    - url: "https://explorer.vexanium.com:6960"
+            #    - url: "http://209.97.162.124:8080"
+            # - url: "http://server1a.saltis.id"
+            #    - url: "http://server1a.saltis.id:3333"
+            #    - url: "http://server2a.saltis.id:3333"
+            #- url: "https://dejaveapi.com"
+    route-to-api-backend:
+      loadBalancer:
+        servers:
+            - url: "http://isp.proit.id:8089"
+    traefik-prometheus:
+      loadBalancer:
+        servers:
+            - url: "http://traefik-prometheus:9090"

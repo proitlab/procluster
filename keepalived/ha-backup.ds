@@ -1,0 +1,13 @@
+#!/bin/bash
+TYPE=$1
+NAME=$2
+STATE=$3
+INTERFACE=ens1
+IPADDR=103.80.237.164/29
+GATEWAY=103.80.237.161
+LOGFILE=/etc/keepalived/ha-avail.log
+
+ip link set dev ${INTERFACE} down
+ifconfig ${INTERFACE} down
+ifconfig ${INTERFACE} 0.0.0.0
+echo "BACKUP" >> ${LOGFILE}
