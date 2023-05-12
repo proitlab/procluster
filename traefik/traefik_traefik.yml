@@ -19,6 +19,7 @@ services:
       - "--providers.docker.swarmMode=true"
       - "--providers.file.directory=/config"
       - "--providers.file.watch=true"
+#      - "--providers.http.endpoint=http://127.0.0.1:9000/api"
       - "--metrics.prometheus=true"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--entrypoints.web.address=:80"
