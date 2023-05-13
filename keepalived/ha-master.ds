@@ -6,6 +6,13 @@ INTERFACE=ens1
 IPADDR=103.80.237.164/29
 GATEWAY=103.80.237.161
 LOGFILE=/etc/keepalived/ha-avail.log
+CONTAINER=traefik_traefik
+# Switch this in BACKUP NODE
+MASTER=manager-1
+BACKUP=manager-2
+
+# DOCKER
+docker service update --constraint-rm node.hostname==${BACKUP} --constraint-add node.hostname==${MASTER} ${CONTAINER}
 
 ip link set dev ${INTERFACE} up
 ip addr add ${IPADDR} dev ${INTERFACE}
