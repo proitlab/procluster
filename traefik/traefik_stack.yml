@@ -1,0 +1,101 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.10"
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+    command:
+      - "--log.level=DEBUG"
+      - "--accesslog"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.file.directory=/config"
+      - "--providers.file.watch=true"
+      - "--metrics.prometheus=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=dedy.sutanto@saltis.id"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - target: 80
+        published: 80
+      - target: 443
+        published: 443
+      - target: 1883
+        published: 1883
+      - target: 3306
+        published: 3306
+      - target: 8080
+        published: 8080
+    volumes:
+      - "/opt/docker/swarm/traefik/letsencrypt:/letsencrypt"
+      - "/opt/docker/swarm/traefik-config/static.yaml:/etc/traefik/traefik.yaml"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik-net
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - /opt/docker/swarm/traefik/prometheus/:/etc/prometheus/
+      - /opt/docker/swarm/traefik/prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.size=1024MB'
+    deploy:
+      labels:
+        - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+        - "traefik.http.routers.prometheus.service=prometheus"
+        - "traefik.http.routers.prometheus.middlewares=traefik-auth"
+        - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - traefik-net
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - /opt/docker/swarm/traefik/grafana-data:/var/lib/grafana
+      - /opt/docker/swarm/traefik/grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    deploy:
+      labels:
+        - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+        - "traefik.http.routers.grafana.service=grafana"
+        - "traefik.http.routers.grafana.middlewares=traefik-auth"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - traefik-net
+
+networks:
+  default:
+    external:
+      name: traefik-net
