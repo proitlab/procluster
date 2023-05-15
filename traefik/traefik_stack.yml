@@ -57,7 +57,7 @@ services:
       # Sample Cluster ID - Treafik HTTP Provider
       PROCLUSTER_ID: a801ae68-7fc2-48ed-bb21-24c5275ac797
       TRAEFIK_CONFIG_DIRECTORY: /config
-      TRAEFIK_CONFIG_DIRECTORY: traefik.yaml
+      TRAEFIK_CONFIG_FILE: traefik.yaml
     networks:
       - traefik-net
 
@@ -112,6 +112,5 @@ services:
       - traefik-net
 
 networks:
-  default:
-    external:
-      name: traefik-net
+  traefik-net:
+    external: true
