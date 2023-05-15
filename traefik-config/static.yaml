@@ -11,10 +11,6 @@ entryPoints:
     address: ":80"
   websecure:
     address: ":443"
-  mqtt:
-    address: ":1883"
-  mysql:
-    address: ":3306"
 
 providers:
   docker:
@@ -26,7 +22,7 @@ providers:
     directory: "/config"
     watch: true
   http:
-    endpoint: "http://traefik-config/a801ae68-7fc2-48ed-bb21-24c5275ac797"
+    endpoint: "http://traefik-config/{PROCLUSTER_ID}"
 
 accessLog: {}
 #  filePath: "/var/logs/access.log"
