@@ -1,0 +1,52 @@
+## STATIC CONFIGURATION
+log:
+  level: DEBUG
+
+api:
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  mqtt:
+    address: ":1883"
+  mysql:
+    address: ":3306"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    swarmMode: true
+    watch: true
+  file:
+    directory: "/config"
+    watch: true
+  http:
+    endpoint: "http://traefik-config/a801ae68-7fc2-48ed-bb21-24c5275ac797"
+
+accessLog: {}
+#  filePath: "/var/logs/access.log"
+
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+certificatesResolvers:
+    letsencrypt:
+     # Enable ACME (Let's Encrypt): automatic SSL.
+      acme:
+        httpchallenge:
+          entrypoint: web
+        email: "dedy.sutanto@saltis.id"
+        storage: "/letsencrypt/acme.json"
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13

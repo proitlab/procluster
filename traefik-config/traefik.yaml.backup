@@ -1,0 +1,166 @@
+http:
+  middlewares:
+    https-force:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    ddos-ratelimit:
+      rateLimit:
+        average: 1
+        burst: 1
+  routers:
+    web_proit-co-id:
+      rule: "Host(`proit.co.id`)"
+      service: web_proit-co-id
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+    web_api-databisnis-id:
+      rule: "Host(`api.databisnis.id`)"
+      service: web_api-databisnis-id
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+    web_cs-backone-cloud:
+      rule: "Host(`cs.backone.cloud`)"
+      service: web_cs-backone-cloud
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+
+    vex-nodeos:
+      rule: "( Host(`api.vex.proit.id`) || Host(`api.databisnis.id`) ) && PathPrefix(`/v1/chain`)"
+      #rule: "Host(`api.vex.proit.id`)"
+      service: vex-nodeos-backend
+      priority: 1000
+      entryPoints:
+        - web
+    vex-nodeos-https:
+      rule: "( Host(`api.vex.proit.id`) || Host(`api.databisnis.id`) ) && PathPrefix(`/v1/chain`)"
+      service: vex-nodeos-backend
+      priority: 1000
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+    vex-nodeos-https-ddos:
+      rule: "( Host(`api.vex.proit.id`) || Host(`api.databisnis.id`) ) && PathPrefix(`/v1/chain`) && ClientIP(`103.171.83.86/32`)"
+      service: vex-nodeos-backend
+      priority: 1000
+      middlewares:
+        - ddos-ratelimit
+      entryPoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+    vex-history:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/v1/history`)"
+      service: vex-history-backend
+      entryPoints:
+        - web
+    vex-api:
+      rule: "Host(`api.vex.proit.id`) && PathPrefix(`/api/v1`)"
+      service: vex-api-backend
+      entryPoints:
+        - web
+  services:
+    web_proit-co-id:
+      loadBalancer:
+        servers:
+          - url: "http://server2.saltis.id:49162"
+    web_api-databisnis-id:
+      loadBalancer:
+        servers:
+          - url: "http://server2.saltis.id:49158"
+    vex-nodeos-backend:
+      weighted:
+        services:
+          - name: proitidgovex-nodeos
+            weight: 5
+          - name: databisnisid-nodeos
+            weight: 5
+
+    proitidgovex-nodeos:
+      loadBalancer:
+        healthCheck:
+            path: /v1/chain/get_info
+            interval: "30s"
+            timeout: "3s"
+        servers:
+          - url: "http://server1.saltis.id:8089"
+    databisnisid-nodeos:
+      loadBalancer:
+        healthCheck:
+            path: /v1/chain/get_info
+            interval: "30s"
+            timeout: "3s"
+        servers:
+          - url: "http://server2.saltis.id:8092"
+    vex-history-backend:
+      loadBalancer:
+        healthCheck:
+            path: /v1/history/get_accounts
+            interval: "30s"
+            timeout: "3s"
+        servers:
+            #    - url: "http://server2a.saltis.id:3333"
+            #    - url: "http://server1a.saltis.id:3333"
+            #    - url: "https://explorer.vexanium.com:6960"
+            #    - url: "http://209.97.162.124:8080"
+            # - url: "http://server1a.saltis.id"
+            #    - url: "http://server1a.saltis.id:3333"
+            #    - url: "http://server2a.saltis.id:3333"
+            #- url: "https://dejaveapi.com"
+    vex-api-backend:
+      loadBalancer:
+        servers:
+          - url: "http://isp.proit.id:8089"
+    web_cs-backone-cloud:
+      weighted:
+        services:
+        - name: cs-backone_internal
+          weight: 3
+        - name: cs-backone_external
+          weight: 1
+
+    cs-backone_internal:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.168.112:8000"
+
+    cs-backone_external:
+      loadBalancer:
+        servers:
+          - url: "http://server1a.saltis.id:8000"
+
+tcp:
+  routers:
+    mqtt-broker-https:
+      entrypoints:
+        - websecure
+      rule: "HostSNI(`mqtt.prod.proit.id`)"
+      service: mqtt-broker
+      tls:
+        certresolver: letsencrypt
+    mqtt-broker:
+      entrypoints:
+        - mqtt
+      rule: "HostSNI(`*`)"
+      service: mqtt-broker
+    mysql-db:
+      entrypoints:
+        - mysql
+      rule: "HostSNI(`*`)"
+      service: mysql-db
+  services:
+    mqtt-broker:
+      loadbalancer:
+        servers:
+          - address: mqtt-broker:1883
+    mysql-db:
+      loadbalancer:
+        servers:
+          - address: mysql-db:1883
