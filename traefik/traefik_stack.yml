@@ -55,7 +55,7 @@ services:
       - "/opt/docker/swarm/traefik-config:/config"
     environment:
       # Sample Cluster ID - Treafik HTTP Provider
-      PROCLUSTER_ID: a801ae68-7fc2-48ed-bb21-24c5275ac797
+      PROCLUSTER_ID: {PROCLUSTER_ID}
       TRAEFIK_CONFIG_DIRECTORY: /config
       TRAEFIK_CONFIG_FILE: traefik.yaml
     networks:
