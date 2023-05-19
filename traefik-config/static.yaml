@@ -34,6 +34,14 @@ metrics:
       - 0.3
       - 1.2
       - 5.0
+
+tracing:
+  jaeger:
+    samplingServerURL: http://jaeger:5778/sampling
+    samplingType: const
+    samplingParam: 1.0
+    localAgentHostPort: jaeger:6831
+
 certificatesResolvers:
     letsencrypt:
      # Enable ACME (Let's Encrypt): automatic SSL.
